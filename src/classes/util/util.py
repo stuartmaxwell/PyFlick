@@ -15,7 +15,7 @@ class Util(object):
         with open(filepath, 'w') as outfile:
             try:
                 json.dump(data, outfile, indent=2)
-            except ValueError, e:
+            except ValueError as e:
                 return False
             return True
 
@@ -27,6 +27,6 @@ class Util(object):
             data = {}
             try:
                 data = json.load(stream)
-            except ValueError, e:
+            except ValueError as e:
                 return False
             return data

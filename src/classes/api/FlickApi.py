@@ -25,7 +25,7 @@ class FlickApi(object):
     def __update(self, writeToFile=False):
         """ Pull Updates From Flick Servers"""
 
-        print "getting the latest price"
+        print("getting the latest price")
         headers = {
           "Authorization": "Bearer %s" % self.session["id_token"]
         }
@@ -48,8 +48,8 @@ class FlickApi(object):
       """ Checks if spot price has expired """
       nowEpoch = int(time.time())
       nextEpoch = self.getNextUpdateTime(True)
-      print "%d" % nextEpoch
-      print "%d" % nowEpoch
+      print("%d" % nextEpoch)
+      print("%d" % nowEpoch)
       if(nextEpoch < nowEpoch):
         return True
       return False
