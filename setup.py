@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="PyFlick", # Replace with your own username
-    version="0.0.1",
+    name="PyFlick",
+    version="0.0.2",
     author="ZephireNZ",
     author_email="brynley+pypi@zephire.nz",
     description="Python API For Flick Electric in New Zealand",

@@ -49,7 +49,7 @@ class AbstractFlickAuth(ABC):
             if result.status != 200:
                 raise AuthException({
                     "status": result.status,
-                    "message": result.text()
+                    "message": await result.text()
                 })
 
             return await result.json()
