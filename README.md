@@ -1,89 +1,69 @@
+[![Build Status](https://travis-ci.org/ZephireNZ/PyFlick.png?branch=master)](https://travis-ci.org/ZephireNZ/PyFlick)
+[![PyPI version](https://badge.fury.io/py/PyFlick.svg)](https://pypi.org/project/PyFlick/)
+
 # PyFlick
 A quick and dirty Python API for [Flick Electric](https://flickelectric.co.nz).
 
-**Don't be evil** - This library has been designed to minimize hitting the Flick API as much as possible by caching data in files for later retrieval. Be a #cleverflickster and make sure you are respectful and responsible when consuming this API.
-
-### Getting Started
-
-First things first, clone the repo:
-
-```bash
-git clone git@github.com:driannaude/PyFlick.git
-```
-
-You will need to create a JSON config file in `src/` called config.json that contains your `username`, `password`, `client_id` and `client_secret`:
-You can use the client id/secret below, or find your own by sniffing the request from your phone/app with any reputable MITM tool
-```json
-{
-  "client_id": "le37iwi3qctbduh39fvnpevt1m2uuvz",
-  "client_secret": "ignwy9ztnst3azswww66y9vd9zt6qnt",
-  "username": "email@example.com",
-  "password": "SuperSecretPassword"
-}
-```
-
-You can then initialize the API like this:
-
-```python
-config = Config().get()
-api = FlickApi(config["username"], config["password"], config["client_id"], config["client_secret"])
-```
-
-Alternatively, you can manually pass in your credentials as arguments to the FlickAPI class init method.
-
 ### Usage
 
-The following methods are available:
+```python
+from pyflick import FlickAPI
+from pyflick.authentication import SimpleFlickAuth
+from aiohttp import ClientSession
 
-|Method |Arguments |Returns |
-|-------|----------|:--------|
-|`getRawData()`| `None`| `Returns` Raw `JSON` object ([see below](#raw-json-data)) |
-|`getPricePerKwh()`| `None`| `Returns` Price Per KwH |
-|`getPriceBreakdown()`| `None`| `Returns` dict with Charges and price|
-|`getLastUpdateTime()`| `Bool isEpoch` | `Returns` last updated timestamp, pass `True` value for `isEpoch` to get UTC seconds since Epoch |
-|`getNextUpdateTime()`| `Bool isEpoch` | `Returns` next update timestamp, pass `True` value for `isEpoch` to get UTC seconds since Epoch | |
+def async get_flick_pricing():
+    async with ClientSession() as session:
+        auth = SimpleFlickAuth("USERNAME", "PASSWORD", session)
 
+        api = FlickAPI(auth)
 
-### Raw JSON Data
-this will return a price object that looks a little like this:
+        return await api.getPricing()
+```
+
+The `SimpleFlickAuth` client can also accept custom client ID and secret (this can be found by sniffing the client).
+
+API will return a `FlickPrice` object for accessing the price information.
+
+You can also get the raw data via `FlickPrice.raw`.
+
+This will return a price object that looks a little like this:
 
 ```json
 {
   "kind": "mobile_provider_price",
   "customer_state": "active",
   "needle": {
-    "price": "19.862",
-    "status": "urn:flick:market:price:forecast",
+    "price": "11.163",
+    "status": "urn:flick:market:price:no_contract",
     "unit_code": "cents",
     "per": "kwh",
-    "start_at": "2017-09-08T03:30:00Z",
-    "end_at": "2017-09-08T03:59:59Z",
-    "now": "2017-09-08T03:53:34.985Z",
+    "start_at": "2020-04-19T02:30:00Z",
+    "end_at": "2020-04-19T02:59:59Z",
+    "now": "2020-04-19T02:34:38.410Z",
     "type": "rated",
-    "charge_methods": ["kwh", "spot_price"],
-    "components": [{
-      "charge_method": "kwh",
-      "value": "0.113"
-    }, {
-      "charge_method": "kwh",
-      "value": "1.5"
-    }, {
-      "charge_method": "kwh",
-      "value": "10.773"
-    }, {
-      "charge_method": "spot_price",
-      "value": "7.476"
-    }]
+    "charge_methods": [
+      "kwh"
+    ],
+    "components": [
+      {
+        "kind": "component",
+        "charge_method": "kwh",
+        "charge_setter": "retailer",
+        "value": "4.26",
+        "quantity": "1.0",
+        "unit_code": "cents",
+        "per": "kwh",
+        "flow_direction": "import",
+        "metadata": {
+          "content_code": "UN",
+          "channel_number": 1,
+          "meter_serial_number": "RD1111111",
+          "hours_of_availability": 24
+        },
+        "_links": {}
+      },
+      ...
+    ]
   }
 }
 ```
-
-### Disclaimer/Legal
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
