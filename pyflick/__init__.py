@@ -1,67 +1,48 @@
 """Python API For Flick Electric in New Zealand"""
 from .authentication import AbstractFlickAuth
-from .const import DEFAULT_API_HOST, DEFAULT_PRICE_ENDPOINT
-from typing import List
+from .types import AuthException, CustomerAccount, RatingRatedPeriod, APIException, FlickPrice
 
-from dateutil.parser import isoparse
-from datetime import datetime as dt
-from decimal import Decimal
+import json_api_doc
 
 
 class FlickAPI():
     """Python API For Flick Electric in New Zealand"""
-    def __init__(self, auth: AbstractFlickAuth, host: str = DEFAULT_API_HOST):
-        self._auth: AbstractFlickAuth = auth
-        self._host: str = host
 
-    async def getPricing(self, url: str = DEFAULT_PRICE_ENDPOINT) -> dict:
-        response = await self._auth.request("GET", url)
+    def __init__(self, auth: AbstractFlickAuth):
+        self._auth: AbstractFlickAuth = auth
+
+    async def __getJsonDoc(self, *args, **kwargs):
+        response = await self._auth.request(*args, **kwargs)
 
         async with response:
+            if (response.status in [401, 403]):
+                raise AuthException({
+                    "status": response.status,
+                    "message": await response.text()
+                })
             if response.status != 200:
                 raise APIException({
                     "status": response.status,
                     "message": await response.text()
                 })
 
-            return FlickPrice(await response.json())
+            api_response = await response.json()
 
+            return json_api_doc.deserialize(api_response)
 
-class FlickPrice():
-    def __init__(self, pricing: dict):
-        needle = pricing["needle"]
+    async def getCustomerAccounts(self) -> list[CustomerAccount]:
+        """Returns the accounts viewable by the current user."""
 
-        self.price: Decimal = Decimal(needle["price"])
-        self.unit_code: str = needle["unit_code"]
-        self.per: str = needle["unit_code"]
-        self.start_at: dt = isoparse(needle["start_at"])
-        self.end_at: dt = isoparse(needle["end_at"])
-        self.now: dt = isoparse(needle["now"])
-        self.type: str = needle["type"]
-        self.components: List[PriceComponent] = [
-            PriceComponent(c) for c in needle["components"]]
-        self.raw = pricing
+        return await self.__getJsonDoc("GET", "/customer/v1/accounts", params={
+            "include": "main_consumer"
+        })
 
-    def __repr__(self):
-        return f"FlickPrice({self.raw})"
+    async def getPricing(self, supply_node: str) -> FlickPrice:
+        """Gets current pricing for the given supply node."""
 
+        period: RatingRatedPeriod = await self.__getJsonDoc("GET", "rating/v1/rated_periods", params={
+            "include": "components",
+            "supply_node_ref": supply_node,
+        })
 
-class PriceComponent():
-    def __init__(self, component: dict):
-        self.kind: str = component["kind"]
-        self.charge_method: str = component["charge_method"]
-        self.charge_setter: str = component["charge_setter"]
-        self.value: Decimal = Decimal(component["value"])
-        self.quantity: Decimal = Decimal(component["quantity"])
-        self.unit_code: str = component["unit_code"]
-        self.per: str = component["per"]
-        self.flow_direction: str = component["flow_direction"]
-        self.metadata: dict = component["metadata"]
-        self.raw = component
-
-    def __repr__(self):
-        return f"PriceComponent({self.raw})"
-
-
-class APIException(Exception):
-    pass
+        return FlickPrice(period)
