@@ -71,10 +71,11 @@ class AuthException(Exception):
 class FlickPrice():
     def __init__(self, period: RatingRatedPeriod):
         self.raw: RatingRatedPeriod = period
-        self.price: Decimal = Decimal(period["cost"])
+        self.cost = Decimal(period["cost"])
+        self.quantity = Decimal(period["quantity"])
         self.start_at: dt = isoparse(period["start_at"])
         self.end_at: dt = isoparse(period["end_at"])
-        self.status: str = period["type"]
+        self.status: str = period["status"]
         self.components: list[PriceComponent] = [PriceComponent(c) for c in period["components"]]
 
     def __repr__(self):
@@ -83,13 +84,11 @@ class FlickPrice():
 
 class PriceComponent():
     def __init__(self, component: RatingComponent):
-        # TODO: Fix attributes
-
         self.raw = component
-        self.kind: str = component["charge_setter"]
         self.charge_method: str = component["charge_method"]
         self.charge_setter: str = component["charge_setter"]
         self.value: Decimal = Decimal(component["value"])
+        self.single_unit_price: Decimal = Decimal(component["single_unit_price"])
         self.quantity: Decimal = Decimal(component["quantity"])
         self.unit_code: str = component["unit_code"]
         self.charge_per: str = component["charge_per"]
