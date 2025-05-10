@@ -8,17 +8,23 @@ A quick and dirty Python API for [Flick Electric](https://flickelectric.co.nz).
 ## Usage
 
 ```python
+import asyncio
+
+from aiohttp import ClientSession
 from pyflick import FlickAPI
 from pyflick.authentication import SimpleFlickAuth
-from aiohttp import ClientSession
 
-def async get_flick_pricing():
+
+async def get_flick_pricing():
     async with ClientSession() as session:
         auth = SimpleFlickAuth("USERNAME", "PASSWORD", session)
-
         api = FlickAPI(auth)
+        supply_node_ref = await api.getSupplyNodeRef()
+        return await api.getPricing(supply_node_ref)
 
-        return await api.getPricing()
+
+print(asyncio.run(get_flick_pricing()))
+
 ```
 
 The `SimpleFlickAuth` client can also accept custom client ID and secret (this can be found by sniffing the client).
