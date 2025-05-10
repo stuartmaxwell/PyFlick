@@ -43,6 +43,28 @@ class FlickAPI():
 
         return await self.__getJsonDoc("GET", "/customer/user_accounts_info")
 
+    async def getSupplyNodeRef(self) -> str:
+        """Returns the supply node reference for the current user."""
+        _LOGGER.debug("Fetching supply node reference")
+
+        accounts: list[CustomerAccount] = await self.getCustomerAccounts()
+
+        if not accounts:
+            raise APIException({
+                "status": 404,
+                "message": "No customer accounts found"
+            })
+
+        active_accounts: CustomerAccount = [account for account in accounts if account["active"] is True]
+
+        if not active_accounts:
+            raise APIException({"status": 404, "message": "No active customer account found"})
+
+        if len(active_accounts) > 1:
+            raise APIException({"status": 400, "message": "Multiple active customer accounts found"})
+
+        return active_accounts[0]["supply_node_ref"]
+
     async def getPricing(self, supply_node: str) -> FlickPrice:
         """Gets current pricing for the given supply node."""
         _LOGGER.debug("Fetching pricing for %s", supply_node)
