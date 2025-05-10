@@ -41,9 +41,7 @@ class FlickAPI():
         """Returns the accounts viewable by the current user."""
         _LOGGER.debug("Fetching customer accounts")
 
-        return await self.__getJsonDoc("GET", "/customer/v1/accounts", params={
-            "include": "main_consumer"
-        })
+        return await self.__getJsonDoc("GET", "/customer/user_accounts_info")
 
     async def getPricing(self, supply_node: str) -> FlickPrice:
         """Gets current pricing for the given supply node."""
